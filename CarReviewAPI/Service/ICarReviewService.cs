@@ -1,6 +1,7 @@
-﻿using CarReviewAPI.models;
+﻿// ICarReviewService.cs
+using CarReviewAPI.models;
 
-namespace CarReview.Search.Api.Services
+namespace CarReviewAPI.Services
 {
     public interface ICarReviewService
     {
