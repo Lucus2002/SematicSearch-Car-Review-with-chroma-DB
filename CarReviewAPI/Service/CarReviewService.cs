@@ -1,4 +1,5 @@
 ﻿using CarReviewAPI.models;
+using CarReviewAPI.Services;
 using ChromaDB.Client;
 using Microsoft.Extensions.AI;
 using System.Net.Http;

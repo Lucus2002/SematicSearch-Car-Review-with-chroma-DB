@@ -1,5 +1,6 @@
 using CarReview.Search.Api.Services;
 using CarReviewAPI;
+using CarReviewAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

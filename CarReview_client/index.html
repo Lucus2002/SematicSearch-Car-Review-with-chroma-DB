@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Review Search</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">Car Review Search</h1>
+      <p class="text-gray-600">Find reviews for your favorite vehicles</p>
+    </header>
+
+    <!-- Search Form -->
+    <div class="bg-white p-4 rounded-lg shadow-md mb-8">
+      <div class="flex flex-col md:flex-row gap-4">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search by model, year, or features..."
+          class="flex-grow px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Search car reviews"
+        />
+        <button
+          onclick="searchReviews()"
+          class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          id="searchButton"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Area -->
+    <div id="statusArea">
+      <div id="loading" class="hidden text-center my-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <p class="mt-2 text-gray-600">Searching reviews...</p>
+      </div>
+      
+      <div id="errorMessage" class="hidden text-center p-8 text-red-500"></div>
+    </div>
+
+    <!-- Results Container -->
+    <div id="results" class="grid grid-cols-1 gap-4 md:gap-6"></div>
+  </div>
+
+  <script>
+    // API Configuration
+    const API_BASE_URL = 'https://localhost:7089';
+    const API_ENDPOINT = '/api/car_review';
+    
+    // DOM Elements
+    const searchInput = document.getElementById("searchInput");
+    const searchButton = document.getElementById("searchButton");
+    const loadingElement = document.getElementById("loading");
+    const errorElement = document.getElementById("errorMessage");
+    const resultsContainer = document.getElementById("results");
+
+    // Event Listeners
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchReviews();
+    });
+    
+    searchButton.addEventListener("click", searchReviews);
+
+    // Main Search Function
+    async function searchReviews() {
+      const searchTerm = searchInput.value.trim();
+      
+      // Validate input
+      if (!searchTerm) {
+        showError("Please enter a search term");
+        return;
+      }
+
+      // UI States
+      setLoading(true);
+      clearResults();
+      hideError();
+
+      try {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINT}?term=${encodeURIComponent(searchTerm)}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status} status`);
+        }
+
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+          showNoResults();
+          return;
+        }
+
+        displayResults(data);
+      } catch (error) {
+        console.error("API Error:", error);
+        showError(`Failed to load reviews: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Helper Functions
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loadingElement.classList.remove("hidden");
+        searchButton.disabled = true;
+        searchButton.classList.add("opacity-50");
+      } else {
+        loadingElement.classList.add("hidden");
+        searchButton.disabled = false;
+        searchButton.classList.remove("opacity-50");
+      }
+    }
+
+    function clearResults() {
+      resultsContainer.innerHTML = "";
+    }
+
+    function hideError() {
+      errorElement.classList.add("hidden");
+    }
+
+    function showError(message) {
+      errorElement.textContent = message;
+      errorElement.classList.remove("hidden");
+    }
+
+    function showNoResults() {
+      resultsContainer.innerHTML = `
+        <div class="col-span-full text-center p-8 text-gray-500 fade-in">
+          No reviews found matching "${searchInput.value}".
+          <p class="mt-2 text-sm">Try different search terms like "Toyota", "2022 models", or "fuel efficient"</p>
+        </div>
+      `;
+    }
+
+    function displayResults(reviews) {
+      resultsContainer.innerHTML = reviews.map(review => `
+        <div class="bg-white p-4 md:p-6 rounded-lg shadow hover:shadow-md transition-shadow fade-in">
+          <div class="flex justify-between items-start">
+            <h2 class="text-xl font-bold text-gray-800">${review.vehicle_Model}</h2>
+            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+              ${review.vehicle_Year}
+            </span>
+          </div>
+          <div class="flex items-center my-2">
+            ${generateStarRating(review.rating)}
+            <span class="ml-2 text-gray-600">${review.rating}/5</span>
+          </div>
+          <h3 class="font-semibold text-gray-800 mt-2">${review.review_Title}</h3>
+          <p class="mt-2 text-gray-600 line-clamp-3">${review.car_Review}</p>
+          <button class="mt-3 text-blue-500 hover:text-blue-700 text-sm font-medium">
+            Read full review →
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function generateStarRating(rating) {
+      const fullStars = '★'.repeat(Math.floor(rating));
+      const halfStar = rating % 1 >= 0.5 ? '½' : '';
+      const emptyStars = '☆'.repeat(5 - Math.ceil(rating));
+      return `<span class="text-yellow-400 text-lg">${fullStars}${halfStar}${emptyStars}</span>`;
+    }
+  </script>
+</body>
+</html>
