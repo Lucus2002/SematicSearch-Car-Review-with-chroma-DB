@@ -53,9 +53,10 @@ namespace Chroma_carreview_db
                 };
 
                 await collectionClient.Add([review.Ids], [vector], [metadata]);
+                Console.WriteLine($"Added {records.Count} reviews to ChromaDB.");
+
             }
 
-            Console.WriteLine($"Added {records.Count} reviews to ChromaDB.");
 
             // Example query: Find similar reviews
             var queryText = "Reliable family SUV with good safety features";
